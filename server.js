@@ -20,7 +20,7 @@ const urlSchema = new mongoose.Schema({
 	short: Number,
 	original_url: String,
 });
-urlSchema.plugin(AutoIncrement, { inc_field: "short" });
+urlSchema.plugin(AutoIncrement, { inc_field: "short", start_seq: 1 });
 
 const Url = mongoose.model("Url", urlSchema, process.env.DB_COLLECTION);
 
@@ -70,12 +70,11 @@ app.post("/api/shorturl/new", (req, res) => {
 				}
 
 				const url = new Url({ original_url: u.origin });
-
 				url.save((err, data) => {
 					if (err) return console.log(err);
 
 					return res.json({
-						original_url: u.origin,
+						original_url: data.original_url,
 						short_url: data.short,
 					});
 				});
