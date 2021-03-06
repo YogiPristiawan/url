@@ -20,6 +20,7 @@ const urlSchema = new mongoose.Schema({
 	short: Number,
 	original_url: String,
 });
+console.log(mongoose.connection.readyState);
 urlSchema.plugin(AutoIncrement, { inc_field: "short", start_seq: 1 });
 
 const Url = mongoose.model("Url", urlSchema, process.env.DB_COLLECTION);
@@ -52,12 +53,12 @@ app.get("/api/shorturl/:short?", function (req, res) {
 app.post("/api/shorturl/new", (req, res) => {
 	try {
 		const u = new URL(req.body.url);
-
+		if (u.origin == "null") return res.json({ error: "Invalid URL" });
 		dns.lookup(u.host, (err, address) => {
 			if (err) return console.log(err);
-
+			console.log(address);
 			if (address == undefined)
-				return res.json({ error: "invalid hostname" });
+				return res.json({ error: "Invalid Hostname" });
 
 			Url.findOne({ original_url: u.origin }, (err, data) => {
 				if (err) return console.log(err);
@@ -72,7 +73,7 @@ app.post("/api/shorturl/new", (req, res) => {
 				const url = new Url({ original_url: u.origin });
 				url.save((err, data) => {
 					if (err) return console.log(err);
-
+					console.log(data);
 					return res.json({
 						original_url: data.original_url,
 						short_url: data.short,
@@ -82,7 +83,7 @@ app.post("/api/shorturl/new", (req, res) => {
 		});
 	} catch (error) {
 		if (error instanceof TypeError) {
-			res.json({ error: "invalid url" });
+			res.json({ error: "Invalid URL" });
 		}
 	}
 });
