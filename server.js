@@ -5,6 +5,7 @@ const cors = require("cors");
 const app = express();
 const mongoose = require("mongoose");
 const { url } = require("inspector");
+const { urlencoded } = require("express");
 const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 // Basic Configuration
@@ -20,7 +21,6 @@ const urlSchema = new mongoose.Schema({
 	short: Number,
 	original_url: String,
 });
-console.log(mongoose.connection.readyState);
 urlSchema.plugin(AutoIncrement, { inc_field: "short", start_seq: 1 });
 
 const Url = mongoose.model("Url", urlSchema, process.env.DB_COLLECTION);
@@ -51,41 +51,36 @@ app.get("/api/shorturl/:short?", function (req, res) {
 });
 
 app.post("/api/shorturl/new", (req, res) => {
-	try {
-		const u = new URL(req.body.url);
-		if (u.origin == "null") return res.json({ error: "Invalid URL" });
-		dns.lookup(u.host, (err, address) => {
-			if (err) return console.log(err);
-			console.log(address);
-			if (address == undefined)
-				return res.json({ error: "Invalid Hostname" });
+	const url = req.body.url;
 
-			Url.findOne({ original_url: u.origin }, (err, data) => {
+	const regExp = new RegExp(
+		/(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}| https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi
+	);
+
+	if (!url.match(regExp)) {
+		return res.json({ error: "Invalid URL" });
+	}
+
+	Url.findOne({ original_url: url }, (err, data) => {
+		if (err) return console.log(err);
+
+		if (!data) {
+			console.log("oego");
+			const u = new Url({ original_url: url });
+			u.save((err, data) => {
 				if (err) return console.log(err);
-
-				if (data) {
-					return res.json({
-						original_url: data.original_url,
-						short_url: data.short,
-					});
-				}
-
-				const url = new Url({ original_url: u.origin });
-				url.save((err, data) => {
-					if (err) return console.log(err);
-					console.log(data);
-					return res.json({
-						original_url: data.original_url,
-						short_url: data.short,
-					});
+				return res.json({
+					original_url: data.original_url,
+					short: data.short,
 				});
 			});
-		});
-	} catch (error) {
-		if (error instanceof TypeError) {
-			res.json({ error: "Invalid URL" });
+		} else {
+			return res.json({
+				original_url: data.original_url,
+				short: data.short,
+			});
 		}
-	}
+	});
 });
 
 app.listen(port, function () {
