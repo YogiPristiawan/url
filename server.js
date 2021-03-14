@@ -61,7 +61,7 @@ app.post("/api/shorturl/new", (req, res) => {
 		return res.json({ error: "Invalid URL" });
 	}
 
-	url = url.split("?")[0];
+	// url = url.split("?")[0];
 
 	Url.findOne({ original_url: url }, (err, data) => {
 		if (err) return console.log(err);
