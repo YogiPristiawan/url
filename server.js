@@ -51,7 +51,7 @@ app.get("/api/shorturl/:short?", function (req, res) {
 });
 
 app.post("/api/shorturl/new", (req, res) => {
-	const url = req.body.url;
+	let url = req.body.url;
 
 	const regExp = new RegExp(
 		/(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}| https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi
@@ -64,8 +64,8 @@ app.post("/api/shorturl/new", (req, res) => {
 	Url.findOne({ original_url: url }, (err, data) => {
 		if (err) return console.log(err);
 
+		url = url.split("?")[0];
 		if (!data) {
-			console.log("oego");
 			const u = new Url({ original_url: url });
 			u.save((err, data) => {
 				if (err) return console.log(err);
