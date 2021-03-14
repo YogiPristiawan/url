@@ -72,13 +72,13 @@ app.post("/api/shorturl/new", (req, res) => {
 				if (err) return console.log(err);
 				return res.json({
 					original_url: data.original_url,
-					short: data.short,
+					short_url: data.short,
 				});
 			});
 		} else {
 			return res.json({
 				original_url: data.original_url,
-				short: data.short,
+				short_url: data.short,
 			});
 		}
 	});
